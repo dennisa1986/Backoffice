@@ -1,0 +1,378 @@
+<script>
+    function getContactpersonStatusByID(persID) {
+        const contactpersonsData = window.contactpersonsData;
+        const contactperson = contactpersonsData.find(function (contactperson) {
+            return contactperson.PersID === persID;
+        });
+        return contactperson ? contactperson.Status : "";
+    }
+
+    function showContactpersonsForm(contactpersons) {
+        var html =
+            '<div class="container-fluid">' +
+            '<div class="input-group mb-3">' +
+            '<input type="text" id="searchBar" class="form-control form-control-outline" placeholder="Search...">' +
+            '</div>' +
+            '<div id="searchResults" style="display: none; max-height: 200px; overflow-y: auto;"></div>' +
+            '<form id="contactpersonForm">' +
+
+            '<div class="col-md-12">' +
+            '<div class="card elevation5">' +
+            '<div class="card-body">' +
+            '<h5 class="card-title">Contactpersoon</h5>' +
+            '<div class="form-group row">' +
+            '<div class="col-md-3">' +
+            '<label for="PersID">PersID:</label><br>' +
+            '<input type="text" id="PersID" name="PersID" readonly class="form-control form-control-filled" > ' +
+            '</div>' +
+            '<div class="col-md-3">' +
+            '<label for="Achternaam">Achternaam*:</label><br>' +
+            '<input type="text" id="Achternaam" name="Achternaam" required class="form-control form-control-outline elevation1" > ' +
+            '</div>' +
+            '<div class="col-md-3">' +
+            '<label for="Naam">Naam*:</label><br>' +
+            '<input type="text" id="Naam" name="Naam" required class="form-control form-control-outline elevation1" > ' +
+            '</div>' +
+            '<div class="col-md-3">' +
+            '<label for="Status">Status*:</label><br>' +
+            '<select id="Status" name="Status" required class="form-control form-control-outline elevation1" ></select > ' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+
+            '<div class="col-md-12">' +
+            '<div class="card elevation5">' +
+            '<div class="card-body">' +
+            '<h5 class="card-title">Contactgegevens</h5>' +
+            '<div class="form-group row">' +
+            '<div class="col-md-4">' +
+            '<label for="Telefoonnummer">Telefoonnummer:</label><br>' +
+            '<input type="text" id="Telefoonnummer" name="Telefoonnummer" class="form-control form-control-outline elevation1" > ' +
+            '</div>' +
+            '<div class="col-md-4">' +
+            '<label for="Email">Email:</label><br>' +
+            '<input type="text" id="Email" name="Email" class="form-control form-control-outline elevation1" > ' +
+            '</div>' +
+            '<div class="col-md-4">' +
+            '<label for="LinkedIn">LinkedIn:</label><br>' +
+            '<input type="text" id="LinkedIn" name="LinkedIn" class="form-control form-control-outline elevation1" > ' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+
+            '<div class="col-md-12">' +
+            '<div class="card elevation5">' +
+            '<div class="card-body">' +
+            '<h5 class="card-title">Contact informatie</h5>' +
+            '<div class="form-group row">' +
+            '<div class="col-md-4">' +
+            '<label for="WerkzaamBij">Werkt bij:</label><br>' +
+            '<input type="text" id="WerkzaamBij" name="WerkzaamBij" class="form-control form-control-outline elevation1" > ' +
+            '</div>' +
+            '<div class="col-md-4">' +
+            '<label for="Inkoopbevoegd">Inkoop bevoegd?:</label><br>' +
+            '<input type="text" id="Inkoopbevoegd" name="Inkoopbevoegd" class="form-control form-control-outline elevation1" > ' +
+            '</div>' +
+            '<div class="col-md-4">' +
+            '<label for="Functie">Functie/rol:</label><br>' +
+            '<input type="text" id="Functie" name="Functie" class="form-control form-control-outline elevation1" > ' +
+            '</div>' +
+            '</div>' +
+            '<div class="form-group row">' +
+            '<div class="col-md-12">' +
+            '<label for="Notities">Notities:</label><br>' +
+            '<textarea id="Notities" name="Notities" class="form-control form-control-outline notes-field elevation1" ></textarea > ' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+
+            '<button type="button" id="editButton" disabled class="btn btn-primary btn-outline-primary elevation1" > Edit</button > ' +
+            '<button type="button" id="cancelButton" class="btn btn-primary btn-outline-primary elevation1" style = "display: none;" > Cancel</button > ' +
+            '<input type="submit" id="saveButton" value="Save" disabled class="btn btn-primary btn-outline-primary elevation1" > ' +
+            '<button type="button" id="resetButton" class="btn btn-primary btn-outline-primary elevation1">Reset</button>' +
+            '</form>' +
+            '</div>'; // Closing container div
+
+        $("#content").html(html);
+        attachSearchEventListener(contactpersons); // Attach the search event listener after the form is displayed
+
+        google.script.run.withSuccessHandler(function (statusValues) {
+            const statusSelect = $("#Status");
+            statusSelect.empty(); // Clear any existing options
+            statusValues.forEach(function (status) {
+                const option = $("<option>").val(status).text(status);
+                statusSelect.append(option);
+            });
+
+            // Select the option that matches the contactperson's status if a contactperson is selected
+            if ($("#PersID").val()) {
+                const contactpersonStatus = getContactpersonStatusByID($("#PersID").val()); // Get the current contactperson's
+                status
+                statusSelect.val(contactpersonStatus);
+            } else {
+                // Otherwise, set the default status as "Active"
+                statusSelect.val("Nieuw contact").change(); // Trigger change event to update the selected option
+            }
+        }).getContactpersonStatusValues();
+
+        // Add an event listener to the required fields
+        $("#Achternaam, #Naam, #Status").on("input change", function () {
+            var achternaamValue = $("#Achternaam").val();
+            var naamValue = $("#Naam").val();
+            var statusValue = $("#Status option:selected").val();
+
+            // Enable the save button if all required fields are filled, otherwise disable it
+            if (achternaamValue !== "" && naamValue !== "" && statusValue !== "") {
+                $("#saveButton").prop("disabled", false);
+            } else {
+                $("#saveButton").prop("disabled", true);
+            }
+        });
+
+        // When freshly loading the page
+        $("#contactpersonForm")[0].reset(); // Reset the form fields
+        $("#PersID").prop("readonly", true).addClass("uneditable"); // Make the PersID field readonly and uneditable
+        $("#Achternaam").prop("readonly", false).removeClass("uneditable"); // Make the Achternaam field editable
+        $("#Naam").prop("readonly", false).removeClass("uneditable"); // Make the Naam field editable
+        $("#Status").prop("disabled", false).removeClass("uneditable"); // Make the Status field editable
+        $("#Telefoonnummer").prop("readonly", false).removeClass("uneditable"); // Make the Telefoonnummer field editable
+        $("#Email").prop("readonly", false).removeClass("uneditable"); // Make the Email field editable
+        $("#LinkedIn").prop("readonly", false).removeClass("uneditable"); // Make the LinkedIn field editable
+        $("#WerkzaamBij").prop("readonly", false).removeClass("uneditable"); // Make the WerkzaamBij field editable
+        $("#Inkoopbevoegd").prop("readonly", false).removeClass("uneditable"); // Make the Inkoopbevoegd field editable
+        $("#Functie").prop("readonly", false).removeClass("uneditable"); // Make the Functie field editable
+        $("#Notities").prop("readonly", false).removeClass("uneditable"); // Make the Notities field editable
+        $("#saveButton").prop("disabled", true); // Disable the save button
+        $("#editButton").prop("disabled", true); // Disable the edit button
+        $("#resetButton").prop("disabled", false); // Enable the reset button
+
+        $("#contactpersonForm").submit(function (e) {
+            e.preventDefault(); // Prevent form submission
+
+            // Add rotation class to the save button icon
+            $("#saveButton").addClass("rotate");
+
+            // Extract the contactperson data from the form and save it
+            var contactperson = {
+                PersID: $("#PersID").val(),
+                Status: $("#Status option:selected").val(),
+                Achternaam: $("#Achternaam").val(),
+                Naam: $("#Naam").val(),
+                Telefoonnummer: $("#Telefoonnummer").val(),
+                Email: $("#Email").val(),
+                LinkedIn: $("#LinkedIn").val(),
+                Functie: $("#Functie").val(),
+                WerkzaamBij: $("#WerkzaamBij").val(),
+                Inkoopbevoegd: $("#Inkoopbevoegd").val(),
+                Notities: $("#Notities").val()
+            };
+
+            // Check if all required fields are filled
+            var requiredFieldsFilled =
+                $("#Achternaam").val() !== "" &&
+                $("#Naam").val() !== "" &&
+                $("#Status option:selected").val() !== "";
+
+            google.script.run.withSuccessHandler(function (result) {
+                // Update the contactpersons data
+                window.contactpersonsData = result.contactpersonsData;
+
+                // If the PersID was empty, we know it was a new contactperson
+                if (contactperson.PersID === "" && result.newContactperson) {
+                    // Update the PersID field in the form
+                    $("#PersID").val(result.newContactperson.PersID);
+                }
+
+                // Update the searchbar contactpersons data after save
+                google.script.run.withSuccessHandler(function(contactpersons) {
+                window.contactpersonsData = contactpersons;
+
+                    // Attach the updated companies data to the search bar
+                    attachSearchEventListener(window.contactpersonsData);
+
+                }).withFailureHandler(showError).getContactpersonenData();
+
+                // Remove the rotation class from the save button icon
+                $("#saveButton").removeClass("rotate");
+
+                // Make fields uneditable after saving
+                $("#Achternaam").prop("readonly", true).addClass("uneditable");
+                $("#Naam").prop("readonly", true).addClass("uneditable");
+                $("#Status").prop("disabled", true).addClass("uneditable");
+                $("#Telefoonnummer").prop("readonly", true).addClass("uneditable");
+                $("#Email").prop("readonly", true).addClass("uneditable");
+                $("#LinkedIn").prop("readonly", true).addClass("uneditable");
+                $("#Functie").prop("readonly", true).addClass("uneditable");
+                $("#WerkzaamBij").prop("readonly", true).addClass("uneditable");
+                $("#Inkoopbevoegd").prop("readonly", true).addClass("uneditable");
+                $("#Notities").prop("readonly", true).addClass("uneditable");
+
+                // Disable the save button and enable the edit button after saving
+                $("#saveButton").prop("disabled", true);
+                $("#editButton").prop("disabled", false);
+
+                // Replace the cancel button with the edit button
+                $("#cancelButton").hide();
+                $("#editButton").show();
+
+            }).saveContactperson(contactperson, requiredFieldsFilled, contactpersons);
+        });
+
+
+        $("#editButton").click(function () {
+            // Make fields editable when the edit button is clicked
+            $("#Achternaam").prop("readonly", false).removeClass("uneditable");
+            $("#Naam").prop("readonly", false).removeClass("uneditable");
+            $("#Status").prop("disabled", false).removeClass("uneditable");
+            $("#Telefoonnummer").prop("readonly", false).removeClass("uneditable");
+            $("#Email").prop("readonly", false).removeClass("uneditable");
+            $("#LinkedIn").prop("readonly", false).removeClass("uneditable");
+            $("#Functie").prop("readonly", false).removeClass("uneditable");
+            $("#WerkzaamBij").prop("readonly", false).removeClass("uneditable");
+            $("#Inkoopbevoegd").prop("readonly", false).removeClass("uneditable");
+            $("#Notities").prop("readonly", false).removeClass("uneditable");
+
+            // Enable the save button and disable the edit button
+            $("#saveButton").prop("disabled", false);
+            $("#editButton").prop("disabled", true);
+
+            // Replace the edit button with the cancel button
+            $("#editButton").hide();
+            $("#cancelButton").show();
+        });
+
+        $("#cancelButton").click(function () {
+            // Reset the form and make fields uneditable when the cancel button is clicked
+            $("#contactpersonForm")[0].reset();
+            $("#Achternaam").prop("readonly", true).addClass("uneditable");
+            $("#Naam").prop("readonly", true).addClass("uneditable");
+            $("#Status").prop("disabled", true).addClass("uneditable");
+            $("#Telefoonnummer").prop("readonly", true).addClass("uneditable");
+            $("#Email").prop("readonly", true).addClass("uneditable");
+            $("#LinkedIn").prop("readonly", true).addClass("uneditable");
+            $("#Functie").prop("readonly", true).addClass("uneditable");
+            $("#WerkzaamBij").prop("readonly", true).addClass("uneditable");
+            $("#Inkoopbevoegd").prop("readonly", true).addClass("uneditable");
+            $("#Notities").prop("readonly", true).addClass("uneditable");
+
+            // Disable the save button and enable the edit button
+            $("#saveButton").prop("disabled", true);
+            $("#editButton").prop("disabled", false);
+
+            // Replace the cancel button with the edit button
+            $("#cancelButton").hide();
+            $("#editButton").show();
+        });
+
+        $("#resetButton").click(function () {
+            // Reset the form and make fields editable when the reset button is clicked
+            $("#contactpersonForm")[0].reset();
+            $("#Achternaam").prop("readonly", false).removeClass("uneditable");
+            $("#Naam").prop("readonly", false).removeClass("uneditable");
+            $("#Status").prop("disabled", false).removeClass("uneditable");
+            $("#Telefoonnummer").prop("readonly", false).removeClass("uneditable");
+            $("#Email").prop("readonly", false).removeClass("uneditable");
+            $("#LinkedIn").prop("readonly", false).removeClass("uneditable");
+            $("#Functie").prop("readonly", false).removeClass("uneditable");
+            $("#WerkzaamBij").prop("readonly", false).removeClass("uneditable");
+            $("#Inkoopbevoegd").prop("readonly", false).removeClass("uneditable");
+            $("#Notities").prop("readonly", false).removeClass("uneditable");
+
+            // Disable the save button and enable the edit button
+            $("#saveButton").prop("disabled", true);
+            $("#editButton").prop("disabled", true);
+
+            // Replace the cancel button with the edit button
+            //$("#cancelButton").hide();
+            //$("#editButton").show();
+        });
+
+        function attachSearchEventListener(contactpersons) {
+            $("#searchBar").on("input", function () {
+                var searchTerm = $(this).val().toLowerCase();
+                var searchResults = $("#searchResults");
+
+                if (searchTerm === "") {
+                    searchResults.hide();
+                    searchResults.empty();
+                    return;
+                }
+
+                var filteredContactpersons = contactpersons.filter(function(contactperson) {
+                    return (
+                        contactperson.Achternaam.toLowerCase().includes(searchTerm) ||
+                        contactperson.Naam.toLowerCase().includes(searchTerm)
+                    );
+                });
+
+
+                if (filteredContactpersons.length > 0) {
+                    searchResults.empty();
+
+                    filteredContactpersons.forEach(function(contactperson) {
+                        var contactpersonName = contactperson.Achternaam;
+                        var contactpersonDetails = "(" + [
+                            contactperson.Naam
+                        ].join(" ") + ")";
+
+                        var resultItem = $("<div>").addClass("search-result");
+                        var nameElement = $("<span>").text(contactpersonName).addClass("result-name");
+                        var detailsElement = $("<span>").html("<i>" + contactpersonDetails + "</i>").addClass("result-details");
+
+                        resultItem.append(nameElement, detailsElement);
+                        resultItem.click(function() {
+                            loadContactpersonForm(contactperson);
+                            searchResults.hide();
+                            searchResults.empty();
+                            $("#searchBar").val("");
+                        });
+
+                        searchResults.append(resultItem);
+                    });
+
+                    searchResults.show();
+                } else {
+                    searchResults.hide();
+                    searchResults.empty();
+                }
+            });
+        }
+
+        function loadContactpersonForm(contactperson) {
+            $("#PersID").val(contactperson.PersID);
+            $("#Status").val(contactperson.Status).change();
+            $("#Achternaam").val(contactperson.Achternaam);
+            $("#Naam").val(contactperson.Naam);
+            $("#Telefoonnummer").val(contactperson.Telefoonnummer);
+            $("#Email").val(contactperson.Email);
+            $("#LinkedIn").val(contactperson.LinkedIn);
+            $("#Functie").val(contactperson.Functie);
+            $("#WerkzaamBij").val(contactperson.WerkzaamBij);
+            $("#Inkoopbevoegd").val(contactperson.Inkoopbevoegd);
+            $("#Notities").val(contactperson.Notities);
+
+            
+            // Make fields uneditable initially
+            $("#Achternaam").prop("readonly", true).addClass("uneditable");
+            $("#Naam").prop("readonly", true).addClass("uneditable");
+            $("#Status").prop("disabled", true).addClass("uneditable");
+            $("#Telefoonnummer").prop("readonly", true).addClass("uneditable");
+            $("#Email").prop("readonly", true).addClass("uneditable");
+            $("#LinkedIn").prop("readonly", true).addClass("uneditable");
+            $("#Functie").prop("readonly", true).addClass("uneditable");
+            $("#WerkzaamBij").prop("readonly", true).addClass("uneditable");
+            $("#Inkoopbevoegd").prop("readonly", true).addClass("uneditable");
+            $("#Notities").prop("readonly", true).addClass("uneditable");
+
+            // Disable the save button and enable the edit button after saving
+            $("#saveButton").prop("disabled", true);
+            $("#editButton").prop("disabled", false);
+        }
+    };
+</script>

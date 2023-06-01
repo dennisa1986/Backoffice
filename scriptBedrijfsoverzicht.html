@@ -1,0 +1,494 @@
+<script>
+  function getCompanyStatusByID(compID) {
+    const companiesData = window.companiesData;
+    const company = companiesData.find(function (company) {
+      return company.CompID === compID;
+    });
+    return company ? company.Status : "";
+  }
+
+  function showCompaniesForm(companies) {
+    var html =
+      '<div class="container-fluid">' +
+      '<div class="input-group mb-3">' +
+      '<input type="text" id="searchBar" class="form-control form-control-outline" placeholder="Search...">' +
+      '</div>' +
+      '<div id="searchResults" style="display: none; max-height: 200px; overflow-y: auto;"></div>' +
+      '<form id="companyForm">' +
+
+      '<div class="col-md-12">' +
+      '<div class="card elevation-5">' +
+      '<div class="card-body">' +
+      '<h5 class="card-title">Algemeen</h5>' +
+      '<div class="form-group row">' +
+      '<div class="col-md-3">' +
+      '<label for="CompID">CompID:</label><br>' +
+      '<input type="text" id="CompID" name="CompID" readonly class="form-control form-control-filled">' +
+      '</div>' +
+      '<div class="col-md-6">' +
+      '<label for="Bedrijfsnaam">Bedrijfsnaam*:</label><br>' +
+      '<input type="text" id="Bedrijfsnaam" name="Bedrijfsnaam" required class="form-control form-control-outline elevation-1">' +
+      '</div>' +
+      '<div class="col-md-3">' +
+      '<label for="Status">Status*:</label><br>' +
+      '<select id="Status" name="Status" required class="form-control form-control-outline elevation-1"></select>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+
+      '<div class="col-md-12">' +
+      '<div class="card elevation-5">' +
+      '<div class="card-body">' +
+      '<h5 class="card-title">Adres</h5>' +
+      '<div class="form-group row">' +
+      '<div class="col-md-5">' +
+      '<label for="Straat">Straat:</label><br>' +
+      '<input type="text" id="Straat" name="Straat" class="form-control form-control-outline elevation-1">' +
+      '</div>' +
+      '<div class="col-md-3">' +
+      '<label for="Postcode">Postcode:</label><br>' +
+      '<input type="text" id="Postcode" name="Postcode" class="form-control form-control-outline elevation-1">' +
+      '</div>' +
+      '<div class="col-md-4">' +
+      '<label for="Stad">Stad:</label><br>' +
+      '<input type="text" id="Stad" name="Stad" class="form-control form-control-outline elevation-1">' +
+      '</div>' +
+      '</div>' +
+      '<div class="form-group row">' +
+      '<div class="col-md-6">' +
+      '<label for="Provincie">Provincie:</label><br>' +
+      '<input type="text" id="Provincie" name="Provincie" class="form-control form-control-outline elevation-1">' +
+      '</div>' +
+      '<div class="col-md-6">' +
+      '<label for="Land">Land:</label><br>' +
+      '<input type="text" id="Land" name="Land" class="form-control form-control-outline elevation-1">' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+
+      '<div class="col-md-12">' +
+      '<div class="card elevation-5">' +
+      '<div class="card-body">' +
+      '<h5 class="card-title">Contact</h5>' +
+      '<div class="form-group row">' +
+      '<div class="col-md-4">' +
+      '<label for="Telefoonnummer">Telefoonnummer:</label><br>' +
+      '<input type="text" id="Telefoonnummer" name="Telefoonnummer" class="form-control form-control-outline elevation-1">' +
+      '</div>' +
+      '<div class="col-md-8">' +
+      '<label for="Website">Website:</label><br>' +
+      '<input type="text" id="Website" name="Website" class="form-control form-control-outline elevation-1">' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+
+      '<div class="col-md-12">' +
+      '<div class="card elevation-5">' +
+      '<div class="card-body">' +
+      '<h5 class="card-title">Overig</h5>' +
+      '<div class="form-group row">' +
+      '<div class="col-md-5">' +
+      '<label for="TypeWinkel">TypeWinkel:</label><br>' +
+      '<input type="text" id="TypeWinkel" name="TypeWinkel" class="form-control form-control-outline elevation-1">' +
+      '</div>' +
+      '<div class="col-md-5">' +
+      '<label for="SubLabels">SubLabels:</label><br>' +
+      '<input type="text" id="SubLabels" name="SubLabels" class="form-control form-control-outline elevation-1">' +
+      '</div>' +
+      '<div class="col-md-2">' +
+      '<label for="AantalFilialen">AantalFilialen:</label><br>' +
+      '<input type="text" id="AantalFilialen" name="AantalFilialen" class="form-control form-control-outline elevation-1">' +
+      '</div>' +
+      '</div>' +
+      '<div class="form-group row">' +
+      '<div class="col-md-12">' +
+      '<label for="Notities">Notities:</label><br>' +
+      '<textarea id="Notities" name="Notities" class="form-control form-control-outline notes-field elevation-1"></textarea>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+
+      '<button type="button" id="editButton" disabled class="btn btn-primary btn-outline-primary elevation-1">Edit</button>' +
+      '<button type="button" id="cancelButton" class="btn btn-primary btn-outline-primary elevation-1" style="display: none;">Cancel</button>' +
+      '<input type="submit" id="saveButton" value="Save" disabled class="btn btn-primary btn-outline-primary elevation-1">' +
+      '<button type="button" id="resetButton" class="btn btn-primary btn-outline-primary elevation-1">Reset</button>' +
+      '</form>' +
+      '</div>'; // Closing container div
+
+    $("#content").html(html);
+    attachSearchEventListener(companies); // Attach the search event listener after the form is displayed
+
+    google.script.run.withSuccessHandler(function (statusValues) {
+      const statusSelect = $("#Status");
+      statusSelect.empty(); // Clear any existing options
+      statusValues.forEach(function (status) {
+        const option = $("<option>").val(status).text(status);
+        statusSelect.append(option);
+      });
+
+      // Select the option that matches the company's status if a company is selected
+      if ($("#CompID").val()) {
+        const companyStatus = getCompanyStatusByID($("#CompID").val()); // Get the current company's status
+        statusSelect.val(companyStatus);
+      } else {
+        // Otherwise, set the default status as "Prospect"
+        statusSelect.val("Prospect").change(); // Trigger change event to update the selected option
+      }
+    }).getCompStatusValues();
+
+    // Add an event listener to the required fields
+    $("#Bedrijfsnaam, #Status").on("input change", function () {
+      var bedrijfsnaamValue = $("#Bedrijfsnaam").val();
+      var statusValue = $("#Status option:selected").val();
+
+      // Enable the save button if both fields are filled, otherwise disable it
+      if (bedrijfsnaamValue !== "" && statusValue !== "") {
+        $("#saveButton").prop("disabled", false);
+      } else {
+        $("#saveButton").prop("disabled", true);
+      }
+    });
+
+    // When freshly loading the page
+    $("#companyForm")[0].reset(); // Reset the form fields
+    $("#CompID").prop("readonly", true).addClass("uneditable"); // Make the CompID field readonly and uneditable
+    $("#Bedrijfsnaam").prop("readonly", false).removeClass("uneditable"); // Make the Bedrijfsnaam field editable
+    $("#Status").prop("disabled", false).removeClass("uneditable"); // Make the Status field editable
+    $("#Straat").prop("readonly", false).removeClass("uneditable"); // Make the Straat field editable
+    $("#Postcode").prop("readonly", false).removeClass("uneditable"); // Make the Postcode field editable
+    $("#Stad").prop("readonly", false).removeClass("uneditable"); // Make the Stad field editable
+    $("#Land").prop("readonly", false).removeClass("uneditable"); // Make the Land field editable
+    $("#Provincie").prop("readonly", false).removeClass("uneditable"); // Make the Provincie field editable
+    $("#Telefoonnummer").prop("readonly", false).removeClass("uneditable"); // Make the Telefoonnummer field editable
+    $("#Website").prop("readonly", false).removeClass("uneditable"); // Make the Website field editable
+    $("#Latitude").prop("readonly", false).removeClass("uneditable"); // Make the Latitude field editable
+    $("#Longitude").prop("readonly", false).removeClass("uneditable"); // Make the Longitude field editable
+    $("#TypeWinkel").prop("readonly", false).removeClass("uneditable"); // Make the TypeWinkel field editable
+    $("#SubLabels").prop("readonly", false).removeClass("uneditable"); // Make the SubLabels field editable
+    $("#AantalFilialen").prop("readonly", false).removeClass("uneditable"); // Make the AantalFilialen field editable
+    $("#Notities").prop("readonly", false).removeClass("uneditable"); // Make the Notities field editable
+    $("#saveButton").prop("disabled", true); // Disable the save button
+    $("#editButton").prop("disabled", true); // Disable the edit button
+    $("#resetButton").prop("disabled", false); // Enable the reset button
+
+    $("#companyForm").submit(function (e) {
+      e.preventDefault(); // Prevent form submission
+
+      // Add rotation class to the save button icon
+      $("#saveButton").addClass("rotate");
+
+      // Extract the company data from the form and save it
+      var company = {
+        CompID: $("#CompID").val(),
+        Status: $("#Status option:selected").val(),
+        Bedrijfsnaam: $("#Bedrijfsnaam").val(),
+        Straat: $("#Straat").val(),
+        Postcode: $("#Postcode").val(),
+        Stad: $("#Stad").val(),
+        Land: $("#Land").val(),
+        Provincie: $("#Provincie").val(),
+        Telefoonnummer: $("#Telefoonnummer").val(),
+        Website: $("#Website").val(),
+        Latitude: $("#Latitude").val(),
+        Longitude: $("#Longitude").val(),
+        TypeWinkel: $("#TypeWinkel").val(),
+        SubLabels: $("#SubLabels").val(),
+        AantalFilialen: $("#AantalFilialen").val(),
+        Notities: $("#Notities").val()
+      };
+
+      // Check if the required fields are filled
+      var requiredFieldsFilled = $("#Bedrijfsnaam").val() !== "" && $("#Status option:selected").val() !== "";
+
+      google.script.run.withSuccessHandler(function (result) {
+        // Update the companies data
+        window.companiesData = result.companiesData;
+
+        // If the CompID was empty, we know it was a new company
+        if (company.CompID === "" && result.newCompany) {
+          // Update the CompID field in the form
+          $("#CompID").val(result.newCompany.CompID);
+        }
+
+        // Remove the rotation class from the save button icon
+        $("#saveButton").removeClass("rotate");
+
+
+        // Reload the companies data after saving
+        google.script.run.withSuccessHandler(function (companies) {
+          // Store the companies data in a global variable
+          window.companiesData = companies;
+
+          // Attach the updated companies data to the search bar
+          attachSearchEventListener(window.companiesData);
+
+        }).withFailureHandler(showError).getCompaniesData();
+
+
+        // Make fields uneditable after saving
+        $("#Bedrijfsnaam").prop("readonly", true).addClass("uneditable");
+        $("#Status").prop("disabled", true).addClass("uneditable");
+        $("#Straat").prop("readonly", true).addClass("uneditable");
+        $("#Postcode").prop("readonly", true).addClass("uneditable");
+        $("#Stad").prop("readonly", true).addClass("uneditable");
+        $("#Land").prop("readonly", true).addClass("uneditable");
+        $("#Provincie").prop("readonly", true).addClass("uneditable");
+        $("#Telefoonnummer").prop("readonly", true).addClass("uneditable");
+        $("#Website").prop("readonly", true).addClass("uneditable");
+        $("#Latitude").prop("readonly", true).addClass("uneditable");
+        $("#Longitude").prop("readonly", true).addClass("uneditable");
+        $("#TypeWinkel").prop("readonly", true).addClass("uneditable");
+        $("#SubLabels").prop("readonly", true).addClass("uneditable");
+        $("#AantalFilialen").prop("readonly", true).addClass("uneditable");
+        $("#Notities").prop("readonly", true).addClass("uneditable");
+
+        // Disable the save button and enable the edit button after saving
+        $("#saveButton").prop("disabled", true);
+        $("#editButton").prop("disabled", false);
+
+        // Replace the cancel button with the edit button
+        $("#cancelButton").hide();
+        $("#editButton").show();
+
+      }).saveCompany(company, requiredFieldsFilled);
+    });
+
+    $("#editButton").click(function () {
+      // Make fields editable when the edit button is clicked
+      $("#Bedrijfsnaam").prop("readonly", false).removeClass("uneditable");
+      $("#Status").prop("disabled", false).removeClass("uneditable");
+      $("#Straat").prop("readonly", false).removeClass("uneditable");
+      $("#Postcode").prop("readonly", false).removeClass("uneditable");
+      $("#Stad").prop("readonly", false).removeClass("uneditable");
+      $("#Land").prop("readonly", false).removeClass("uneditable");
+      $("#Provincie").prop("readonly", false).removeClass("uneditable");
+      $("#Telefoonnummer").prop("readonly", false).removeClass("uneditable");
+      $("#Website").prop("readonly", false).removeClass("uneditable");
+      $("#Latitude").prop("readonly", false).removeClass("uneditable");
+      $("#Longitude").prop("readonly", false).removeClass("uneditable");
+      $("#TypeWinkel").prop("readonly", false).removeClass("uneditable");
+      $("#SubLabels").prop("readonly", false).removeClass("uneditable");
+      $("#AantalFilialen").prop("readonly", false).removeClass("uneditable");
+      $("#Notities").prop("readonly", false).removeClass("uneditable");
+
+      // Enable the save button and disable the edit button
+      $("#saveButton").prop("disabled", false);
+      $("#editButton").prop("disabled", true);
+
+      // Replace the edit button with the cancel button
+      $("#editButton").hide();
+      $("#cancelButton").show();
+    });
+
+    $("#cancelButton").click(function () {
+      // Reset the form fields to their original values
+      var companyId = $("#CompID").val();
+      var originalCompany = getCompanyById(companyId);
+
+      if (originalCompany) {
+        populateFormWithCompanyDetails(originalCompany);
+      }
+
+      // Make fields uneditable after resetting
+      $("#Bedrijfsnaam").prop("readonly", true).addClass("uneditable");
+      $("#Status").prop("disabled", true).addClass("uneditable");
+      $("#Straat").prop("readonly", true).addClass("uneditable");
+      $("#Postcode").prop("readonly", true).addClass("uneditable");
+      $("#Stad").prop("readonly", true).addClass("uneditable");
+      $("#Land").prop("readonly", true).addClass("uneditable");
+      $("#Provincie").prop("readonly", true).addClass("uneditable");
+      $("#Telefoonnummer").prop("readonly", true).addClass("uneditable");
+      $("#Website").prop("readonly", true).addClass("uneditable");
+      $("#Latitude").prop("readonly", true).addClass("uneditable");
+      $("#Longitude").prop("readonly", true).addClass("uneditable");
+      $("#TypeWinkel").prop("readonly", true).addClass("uneditable");
+      $("#SubLabels").prop("readonly", true).addClass("uneditable");
+      $("#AantalFilialen").prop("readonly", true).addClass("uneditable");
+      $("#Notities").prop("readonly", true).addClass("uneditable");
+
+      // Disable the save button and enable the edit button
+      $("#saveButton").prop("disabled", true);
+      $("#editButton").prop("disabled", false);
+
+      // Replace the cancel button with the edit button
+      $("#cancelButton").hide();
+      $("#editButton").show();
+    });
+
+    function getCompanyById(companyId) {
+      return window.companiesData.find(function (company) {
+        return company.CompID === companyId;
+      });
+    }
+
+    function populateFormWithCompanyDetails(company) {
+      // Populate the form with the company details
+      $("#CompID").val(company.CompID);
+      $("#Bedrijfsnaam").val(company.Bedrijfsnaam);
+      $("#Status").val(company.Status).change(); // Trigger change event to update the selected option
+      $("#Straat").val(company.Straat);
+      $("#Postcode").val(company.Postcode);
+      $("#Stad").val(company.Stad);
+      $("#Land").val(company.Land);
+      $("#Provincie").val(company.Provincie);
+      $("#Telefoonnummer").val(company.Telefoonnummer);
+      $("#Website").val(company.Website);
+      $("#Latitude").val(company.Latitude);
+      $("#Longitude").val(company.Longitude);
+      $("#TypeWinkel").val(company.TypeWinkel);
+      $("#SubLabels").val(company.SubLabels);
+      $("#AantalFilialen").val(company.AantalFilialen);
+      $("#Notities").val(company.Notities);
+    }
+
+    $("#resetButton").click(function () {
+      // Reset the form fields to their original values
+      $("#companyForm")[0].reset();
+
+      // Make fields editable after resetting
+      $("#Bedrijfsnaam").prop("readonly", false).removeClass("uneditable");
+      $("#Status").prop("disabled", false).removeClass("uneditable");
+      $("#Straat").prop("readonly", false).removeClass("uneditable");
+      $("#Postcode").prop("readonly", false).removeClass("uneditable");
+      $("#Stad").prop("readonly", false).removeClass("uneditable");
+      $("#Land").prop("readonly", false).removeClass("uneditable");
+      $("#Provincie").prop("readonly", false).removeClass("uneditable");
+      $("#Telefoonnummer").prop("readonly", false).removeClass("uneditable");
+      $("#Website").prop("readonly", false).removeClass("uneditable");
+      $("#Latitude").prop("readonly", false).removeClass("uneditable");
+      $("#Longitude").prop("readonly", false).removeClass("uneditable");
+      $("#TypeWinkel").prop("readonly", false).removeClass("uneditable");
+      $("#SubLabels").prop("readonly", false).removeClass("uneditable");
+      $("#AantalFilialen").prop("readonly", false).removeClass("uneditable");
+      $("#Notities").prop("readonly", false).removeClass("uneditable");
+
+      // Disable the save button and enable the edit button
+      $("#saveButton").prop("disabled", true);
+      $("#editButton").prop("disabled", true);
+
+      // Replace the cancel button with the edit button
+      //$("#cancelButton").hide();
+      //$("#editButton").show();
+    });
+
+
+    function attachSearchEventListener(companies) {
+      $("#searchBar").on("input", function () {
+        var searchTerm = $(this).val();
+        var searchResults = $("#searchResults");
+
+        if (searchTerm === "") {
+          searchResults.hide();
+          searchResults.empty();
+          return;
+        }
+
+        // Escape special characters in the search term
+        var escapedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+        // Create a case-insensitive regex pattern to match the search term
+        var regexPattern = new RegExp(escapedSearchTerm, "i");
+
+        var filteredCompanies = companies.filter(function (company) {
+          return (
+            company.Bedrijfsnaam.match(regexPattern) ||
+            company.Straat.match(regexPattern) ||
+            String(company.Postcode).match(regexPattern) ||
+            company.Stad.match(regexPattern)
+          );
+        });
+
+        if (filteredCompanies.length > 0) {
+          searchResults.empty();
+
+          filteredCompanies.forEach(function (company) {
+            var companyName = company.Bedrijfsnaam;
+            var companyDetails = "(" + [
+              company.Straat,
+              company.Postcode,
+              company.Stad
+            ].join(" ") + ")";
+
+            var resultItem = $("<div>").addClass("search-result");
+            var nameElement = $("<span>").text(companyName).addClass("result-name");
+            var detailsElement = $("<span>").html("<i>" + companyDetails + "</i>").addClass("result-details");
+
+            resultItem.append(nameElement, detailsElement);
+            resultItem.click(function () {
+              showCompanyDetails(company);
+              searchResults.hide();
+              searchResults.empty();
+              $("#searchBar").val("");
+            });
+
+            searchResults.append(resultItem);
+          });
+
+          searchResults.show();
+        } else {
+          searchResults.hide();
+          searchResults.empty();
+        }
+      });
+    }
+
+
+    function showCompanyDetails(company) {
+      // Populate the form with the company details
+      $("#CompID").val(company.CompID);
+      $("#Bedrijfsnaam").val(company.Bedrijfsnaam);
+      $("#Status").val(company.Status).change(); // Trigger change event to update the selected option
+      $("#Straat").val(company.Straat);
+      $("#Postcode").val(company.Postcode);
+      $("#Stad").val(company.Stad);
+      $("#Land").val(company.Land);
+      $("#Provincie").val(company.Provincie);
+      $("#Telefoonnummer").val(company.Telefoonnummer);
+      $("#Website").val(company.Website);
+      $("#Latitude").val(company.Latitude);
+      $("#Longitude").val(company.Longitude);
+      $("#TypeWinkel").val(company.TypeWinkel);
+      $("#SubLabels").val(company.SubLabels);
+      $("#AantalFilialen").val(company.AantalFilialen);
+      $("#Notities").val(company.Notities);
+
+      // Make fields uneditable initially
+      $("#CompID").prop("readonly", true).addClass("uneditable");
+      $("#Bedrijfsnaam").prop("readonly", true).addClass("uneditable");
+      $("#Status").prop("disabled", true).addClass("uneditable");
+      $("#Straat").prop("readonly", true).addClass("uneditable");
+      $("#Postcode").prop("readonly", true).addClass("uneditable");
+      $("#Stad").prop("readonly", true).addClass("uneditable");
+      $("#Land").prop("readonly", true).addClass("uneditable");
+      $("#Provincie").prop("readonly", true).addClass("uneditable");
+      $("#Telefoonnummer").prop("readonly", true).addClass("uneditable");
+      $("#Website").prop("readonly", true).addClass("uneditable");
+      $("#Latitude").prop("readonly", true).addClass("uneditable");
+      $("#Longitude").prop("readonly", true).addClass("uneditable");
+      $("#TypeWinkel").prop("readonly", true).addClass("uneditable");
+      $("#SubLabels").prop("readonly", true).addClass("uneditable");
+      $("#AantalFilialen").prop("readonly", true).addClass("uneditable");
+      $("#Notities").prop("readonly", true).addClass("uneditable");
+
+      // Disable the save button and enable the edit button
+      $("#saveButton").prop("disabled", true);
+      $("#editButton").prop("disabled", false);
+    }
+
+    function getCompanyStatusByID(compID) {
+      var company = companies.find(function (company) {
+        return company.CompID === compID;
+      });
+
+      return company ? company.Status : "";
+    }
+  };
+</script>

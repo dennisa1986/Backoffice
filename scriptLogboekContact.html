@@ -1,0 +1,293 @@
+<script>
+    function getLogStatusByID(logID) {
+        const logboekData = window.logboekData;
+        const logEntry = logboekData.find(function (logEntry) {
+            return logEntry.LogID === logID;
+        });
+        return logEntry ? logEntry.Status : "";
+    }
+
+    function showLogboekForm(logboekData) {
+        var html =
+            '<div class="container-fluid">' +
+            '<div class="input-group mb-3">' +
+            '<input type="text" id="searchBar" class="form-control form-control-outline" placeholder="Search...">' +
+            '</div>' +
+            '<div id="searchResults" style="display: none; max-height: 200px; overflow-y: auto;"></div>' +
+            '<form id="logboekForm">' +
+
+            '<div class="col-md-12">' +
+            '<div class="card elevation5">' +
+            '<div class="card-body">' +
+            '<h5 class="card-title">Logboek</h5>' +
+            '<div class="form-group row">' +
+            '<div class="col-md-3">' +
+            '<label for="LogID">LogID:</label><br>' +
+            '<input type="text" id="LogID" name="LogID" readonly class="form-control form-control-filled" > ' +
+            '</div>' +
+            '<div class="col-md-3">' +
+            '<label for="TypeContact">Type contact*:</label><br>' +
+            '<input type="text" id="TypeContact" name="TypeContact" required class="form-control form-control-outline elevation1" > ' +
+            '</div>' +
+            '<div class="col-md-3">' +
+            '<label for="Status">Status*:</label><br>' +
+            '<select id="Status" name="Status" required class="form-control form-control-outline elevation1" ></select > ' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+
+            '<div class="col-md-12">' +
+            '<div class="card elevation5">' +
+            '<div class="card-body">' +
+            '<h5 class="card-title">Notities</h5>' +
+            '<div class="form-group row">' +
+            '<div class="col-md-12">' +
+            '<label for="Notities">Notities:</label><br>' +
+            '<textarea id="Notities" name="Notities" class="form-control form-control-outline notes-field elevation1" ></textarea > ' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+
+            '<button type="button" id="editButton" disabled class="btn btn-primary btn-outline-primary elevation1" > Edit</button > ' +
+            '<button type="button" id="cancelButton" class="btn btn-primary btn-outline-primary elevation1" style = "display: none;" > Cancel</button > ' +
+            '<input type="submit" id="saveButton" value="Save" disabled class="btn btn-primary btn-outline-primary elevation1" > ' +
+            '<button type="button" id="resetButton" class="btn btn-primary btn-outline-primary elevation1">Reset</button>' +
+            '</form>' +
+            '</div>'; // Closing container div
+
+        $("#content").html(html);
+        attachSearchEventListener(logboekData); // Attach the search event listener after the form is displayed
+
+        google.script.run.withSuccessHandler(function (statusValues) {
+            const statusSelect = $("#Status");
+            statusSelect.empty(); // Clear any existing options
+            statusValues.forEach(function (status) {
+                const option = $("<option>").val(status).text(status);
+                statusSelect.append(option);
+            });
+
+            // Select the option that matches the log entry's status if a log entry is selected
+            if ($("#LogID").val()) {
+                const logStatus = getLogStatusByID($("#LogID").val()); // Get the current log entry's status
+                statusSelect.val(logStatus);
+            } else {
+                // Otherwise, set the default status as "New log"
+                statusSelect.val("Nieuw").change(); // Trigger change event to update the selected option
+            }
+        }).getLogStatusValues();
+
+        // Add an event listener to the required fields
+        $("#TypeContact, #Status").on("input change", function () {
+            var typeContactValue = $("#TypeContact").val();
+            var statusValue = $("#Status option:selected").val();
+
+            // Enable the save button if all required fields are filled, otherwise disable it
+            if (typeContactValue !== "" && statusValue !== "") {
+                $("#saveButton").prop("disabled", false);
+            } else {
+                $("#saveButton").prop("disabled", true);
+            }
+        });
+
+        // When freshly loading the page
+        $("#logboekForm")[0].reset(); // Reset the form fields
+        $("#LogID").prop("readonly", true).addClass("uneditable"); // Make the LogID field readonly and uneditable
+        $("#TypeContact").prop("readonly", false).removeClass("uneditable"); // Make the TypeContact field editable
+        $("#Status").prop("disabled", false).removeClass("uneditable"); // Make the Status field editable
+        $("#Notities").prop("readonly", false).removeClass("uneditable"); // Make the Notities field editable
+        $("#saveButton").prop("disabled", true); // Disable the save button
+        $("#editButton").prop("disabled", true); // Disable the edit button
+        $("#resetButton").prop("disabled", false); // Enable the reset button
+
+        $("#logboekForm").submit(function (e) {
+            e.preventDefault(); // Prevent form submission
+
+            // Add rotation class to the save button icon
+            $("#saveButton").addClass("rotate");
+
+            // Extract the log entry data from the form and save it
+            var logEntry = {
+                LogID: $("#LogID").val(),
+                Status: $("#Status option:selected").val(),
+                TypeContact: $("#TypeContact").val(),
+                Notities: $("#Notities").val()
+            };
+
+            // Check if all required fields are filled
+            var requiredFieldsFilled =
+                $("#TypeContact").val() !== "" &&
+                $("#Status option:selected").val() !== "";
+
+            google.script.run.withSuccessHandler(function (result) {
+                // Update the logboek data
+                window.logboekData = result.logboekData;
+
+                // If the LogID was empty, we know it was a new log entry
+                if (logEntry.LogID === "" && result.newLogEntry) {
+                    // Update the LogID field in the form
+                    $("#LogID").val(result.newLogEntry.LogID);
+                }
+
+                // Update the search bar logboek data after save
+                google.script.run.withSuccessHandler(function (logboekData) {
+                    window.getLogboekData = logboekData;
+
+                    // Attach the updated logboek data to the search bar
+                    attachSearchEventListener(window.getLogboekData);
+
+                }).withFailureHandler(showError).getLogboekData();
+
+                // Remove the rotation class from the save button icon
+                $("#saveButton").removeClass("rotate");
+
+                // Make fields uneditable after saving
+                $("#TypeContact").prop("readonly", true).addClass("uneditable");
+                $("#Status").prop("disabled", true).addClass("uneditable");
+                $("#Notities").prop("readonly", true).addClass("uneditable");
+
+                // Disable the save button and enable the edit button after saving
+                $("#saveButton").prop("disabled", true);
+                $("#editButton").prop("disabled", false);
+
+                // Replace the cancel button with the edit button
+                $("#cancelButton").hide();
+                $("#editButton").show();
+
+            }).saveLogEntry(logEntry, requiredFieldsFilled, logboekData);
+        });
+
+        $("#editButton").click(function () {
+            // Make fields editable when the edit button is clicked
+            $("#TypeContact").prop("readonly", false).removeClass("uneditable");
+            $("#Status").prop("disabled", false).removeClass("uneditable");
+            $("#Notities").prop("readonly", false).removeClass("uneditable");
+
+            // Enable the save button and disable the edit button
+            $("#saveButton").prop("disabled", false);
+            $("#editButton").prop("disabled", true);
+
+            // Replace the edit button with the cancel button
+            $("#editButton").hide();
+            $("#cancelButton").show();
+        });
+
+        $("#cancelButton").click(function () {
+            // Reset the form and make fields uneditable when the cancel button is clicked
+            $("#logboekForm")[0].reset();
+            $("#TypeContact").prop("readonly", true).addClass("uneditable");
+            $("#Status").prop("disabled", true).addClass("uneditable");
+            $("#Notities").prop("readonly", true).addClass("uneditable");
+
+            // Disable the save button and enable the edit button
+            $("#saveButton").prop("disabled", true);
+            $("#editButton").prop("disabled", false);
+
+            // Replace the cancel button with the edit button
+            $("#cancelButton").hide();
+            $("#editButton").show();
+        });
+
+        $("#resetButton").click(function () {
+            // Reset the form and make fields editable when the reset button is clicked
+            $("#logboekForm")[0].reset();
+            $("#TypeContact").prop("readonly", false).removeClass("uneditable");
+            $("#Status").prop("disabled", false).removeClass("uneditable");
+            $("#Notities").prop("readonly", false).removeClass("uneditable");
+
+            // Disable the save button and enable the edit button
+            $("#saveButton").prop("disabled", true);
+            $("#editButton").prop("disabled", true);
+
+            // Replace the cancel button with the edit button
+            //$("#cancelButton").hide();
+            //$("#editButton").show();
+        });
+    }
+
+
+    function refreshSearchBar(logboekData) {
+        var searchBar = $("#searchBar");
+        var searchTerm = searchBar.val().toLowerCase();
+
+        if (searchTerm.length > 0) {
+            var searchResults = logboekData.filter(function (logEntry) {
+                return (
+                    logEntry.TypeContact.toLowerCase().includes(searchTerm)
+                );
+            });
+
+            displaySearchResults(searchResults);
+        }
+    }
+
+    function attachSearchEventListener(logboekData) {
+        $("#searchBar").on("input", function () {
+            var searchTerm = $(this).val().toLowerCase();
+
+            if (searchTerm.length > 0) {
+                var searchResults = logboekData.filter(function (logEntry) {
+                    return (
+                        logEntry.TypeContact.toLowerCase().includes(searchTerm)
+                    );
+                });
+
+                displaySearchResults(searchResults);
+            } else {
+                $("#searchResults").hide();
+            }
+        });
+    }
+
+    function displaySearchResults(searchResults) {
+        var searchResultsContainer = $("#searchResults");
+        searchResultsContainer.empty();
+
+        if (searchResults.length > 0) {
+            searchResults.forEach(function (searchResult) {
+                var resultItem = $("<div>").addClass("search-result-item");
+                resultItem.text(searchResult.TypeContact);
+                resultItem.click(function () {
+                    loadLogboekForm(searchResult);
+                    $("#searchResults").hide();
+                    $("#searchBar").val("");
+                });
+                searchResultsContainer.append(resultItem);
+            });
+            searchResultsContainer.show();
+        } else {
+            searchResultsContainer.hide();
+        }
+    }
+
+    function loadLogboekForm(logEntry) {
+        $("#LogID").val(logEntry.LogID);
+        $("#Status").val(logEntry.Status).change();
+        $("#TypeContact").val(logEntry.TypeContact);
+        $("#Notities").val(logEntry.Notities);
+
+
+        // Make fields uneditable initially
+        $("#TypeContact").prop("readonly", true).addClass("uneditable");
+        $("#Status").prop("disabled", true).addClass("uneditable");
+        $("#Notities").prop("readonly", true).addClass("uneditable");
+
+        // Disable the save button and enable the edit button after saving
+        $("#saveButton").prop("disabled", true);
+        $("#editButton").prop("disabled", false);
+    }
+
+    function initialize() {
+        google.script.run.withSuccessHandler(function (result) {
+            window.logboekData = result.logboekData;
+            showLogboekForm(result.logboekData);
+        }).getLogboekData();
+    }
+
+    $(document).ready(function () {
+        initialize();
+    });
+</script>

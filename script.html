@@ -1,0 +1,118 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+  $(document).ready(function () {
+
+    // Show the loading overlay
+    showLoadingOverlay();
+
+    // Preload the companies data
+    google.script.run.withSuccessHandler(function (companies) {
+      // Store the companies data in a global variable
+      window.companiesData = companies;
+      console.log(window.companiesData);
+
+      // Call hideLoadingOverlay() to remove the loading overlay
+      hideLoadingOverlay();
+    }).withFailureHandler(showError).getCompaniesData();
+
+    // Preload the contactpersons data
+    google.script.run.withSuccessHandler(function (contactpersons) {
+      // Store the contactpersons data in a global variable
+      window.contactpersonsData = contactpersons;
+      console.log(window.contactpersonsData);
+    }).withFailureHandler(showError).getContactpersonenData();
+
+    // Preload the logboek data
+    google.script.run.withSuccessHandler(function (logboek) {
+      // Store the logboek data in a global variable
+      window.getLogboekData = logboek;
+      console.log(window.getLogboekData);
+
+      // Additional code after loading both data sets
+      // ...
+    }).withFailureHandler(showError).getLogboekData();
+
+    // Preload the sales data
+    google.script.run.withSuccessHandler(function (sales) {
+      // Store the sales data in a global variable
+      window.salesData = sales;
+      console.log(window.salesData);
+
+      // Additional code after loading both data sets
+      // ...
+    }).withFailureHandler(showError).getSalesData();
+
+
+
+    $(".nav-link").click(function (e) {
+      e.preventDefault();
+      var page = $(this).text();
+      $("#content").html(""); // Clear the content first
+
+      if (page === "Bedrijvenoverzicht") {
+        // Check if companies data is already loaded
+        if (window.companiesData) {
+          showCompaniesForm(window.companiesData); // Use the preloaded data
+        } else {
+          // Fetch the companies data from the server
+          google.script.run.withSuccessHandler(showCompaniesForm).withFailureHandler(showError).getCompaniesData();
+        }
+      }
+
+      if (page === "Contactpersonen") {
+        // Check if companies data is already loaded
+        if (window.contactpersonenData) {
+          showContactpersonsForm(window.contactpersonenData); // Use the preloaded data
+        } else {
+          // Fetch the companies data from the server
+          google.script.run.withSuccessHandler(showContactpersonsForm).withFailureHandler(showError).getContactpersonenData();
+        }
+      }
+
+      if (page === "Contact Logboek") {
+        // Check if Logboek data is already loaded
+        if (window.logboekData) {
+          showLogboekForm(window.logboekData); // Use the preloaded data
+        } else {
+          // Fetch the Logboek data from the server
+          google.script.run.withSuccessHandler(showLogboekForm).withFailureHandler(showError).getLogboekData();
+        }
+      }
+      
+      if (page === "Sales") {
+        // Check if Sales data is already loaded
+        if (window.salesData) {
+          showSalesForm(window.salesData); // Use the preloaded data
+        } else {
+          // Fetch the Sales data from the server
+          google.script.run.withSuccessHandler(showSalesForm).withFailureHandler(showError).getSalesData();
+        }
+      }
+
+      // Continue with your other pages...
+    });
+
+    // Trigger a click event on the "Bedrijvenoverzicht" link
+    $(".nav-link:contains('Bedrijvenoverzicht')").click();
+  });
+
+  function showError(error) {
+    $("#content").html("<p>Error: " + error.message + "</p>");
+  }
+
+  function showLoadingOverlay() {
+    // Create the loading overlay elements
+    var overlay = $('<div class="loading-overlay"></div>');
+    var text = $('<p class="loading-text">Unleashing awesomeness, just a minute...</p>');
+
+    // Append the elements to the body
+    overlay.append(text);
+    $("body").append(overlay);
+  }
+
+  function hideLoadingOverlay() {
+    // Remove the loading overlay
+    $(".loading-overlay").remove();
+  }
+
+</script>

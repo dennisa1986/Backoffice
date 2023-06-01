@@ -1,0 +1,578 @@
+<script>
+    // Function to fetch and populate stuksprijs fields + calculate subtotaal
+    function populateStuksprijsFields() {
+        // Fetch and populate stuksprijs for BA
+        google.script.run.withSuccessHandler(function (stuksprijs_ba) {
+            console.log("Stuksprijs for BA:", stuksprijs_ba);
+            $("#Stuksprijs_ba").val(stuksprijs_ba);
+
+            // Calculate and populate Subtotaal based on Aantal and Stuksprijs
+            $("#Aantal_ba, #Stuksprijs_ba").on("input", function () {
+                const aantal_ba = parseFloat($("#Aantal_ba").val()) || 0;
+                const stuksprijs_ba = parseFloat($("#Stuksprijs_ba").val()) || 0;
+                const subtotaal_ba = aantal_ba * stuksprijs_ba;
+                $("#Subtotaal_ba").val(subtotaal_ba);
+            });
+        }).getStuksprijsByShortname('BA');
+
+        // Fetch and populate stuksprijs for GB
+        google.script.run.withSuccessHandler(function (stuksprijs_gb) {
+            console.log("Stuksprijs for GB:", stuksprijs_gb);
+            $("#Stuksprijs_gb").val(stuksprijs_gb);
+
+            // Calculate and populate Subtotaal based on Aantal and Stuksprijs
+            $("#Aantal_gb, #Stuksprijs_gb").on("input", function () {
+                const aantal_gb = parseFloat($("#Aantal_gb").val()) || 0;
+                const stuksprijs_gb = parseFloat($("#Stuksprijs_gb").val()) || 0;
+                const subtotaal_gb = aantal_gb * stuksprijs_gb;
+                $("#Subtotaal_gb").val(subtotaal_gb);
+            });
+        }).getStuksprijsByShortname('GB');
+
+        // Fetch and populate stuksprijs for 3LB
+        google.script.run.withSuccessHandler(function (stuksprijs_3lb) {
+            console.log("Stuksprijs for 3LB:", stuksprijs_3lb);
+            $("#Stuksprijs_3lb").val(stuksprijs_3lb);
+
+            // Calculate and populate Subtotaal based on Aantal and Stuksprijs
+            $("#Aantal_3lb, #Stuksprijs_3lb").on("input", function () {
+                const aantal_3lb = parseFloat($("#Aantal_3lb").val()) || 0;
+                const stuksprijs_3lb = parseFloat($("#Stuksprijs_3lb").val()) || 0;
+                const subtotaal_3lb = aantal_3lb * stuksprijs_3lb;
+                $("#Subtotaal_3lb").val(subtotaal_3lb);
+            });
+        }).getStuksprijsByShortname('3LB');
+    }
+
+    function getSaleStatusByID(saleID) {
+        const salesData = getSalesData();
+        const sale = salesData.find(function (sale) {
+            return sale.SaleID === saleID;
+        });
+        return sale ? sale.Status : "";
+    }
+
+    function showSalesForm(sales) {
+        var html =
+            '<div class="container-fluid">' +
+            '<div class="input-group mb-3">' +
+            '<input type="text" id="searchBar" class="form-control form-control-outline" placeholder="Search...">' +
+            '</div>' +
+            '<div id="searchResults" style="display: none; max-height: 200px; overflow-y: auto;"></div>' +
+            '<form id="saleForm">' +
+
+            '<div class="col-md-12">' +
+            '<div class="card elevation5">' +
+            '<div class="card-body">' +
+            '<h5 class="card-title">Sale</h5>' +
+            '<div class="form-group row">' +
+            '<div class="col-md-3">' +
+            '<label for="SaleID">Sale ID:</label><br>' +
+            '<input type="text" id="SaleID" name="SaleID" readonly class="form-control form-control-filled" > ' +
+            '</div>' +
+            '<div class="col-md-3">' +
+            '<label for="Status">Status:</label><br>' +
+            '<select id="Status" name="Status" required class="form-control form-control-outline elevation1" ></select > ' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+
+            '<div class="col-md-12">' +
+            '<div class="card elevation5">' +
+            '<div class="card-body">' +
+            '<h5 class="card-title">Sale Details</h5>' +
+            '<div class="form-group row">' +
+            '<div class="col-md-4">' +
+            '<label for="Besteldatum">Besteldatum*:</label><br>' +
+            '<input type="text" id="Besteldatum" name="Besteldatum" class="form-control form-control-outline elevation1" > ' +
+            '</div>' +
+            '<div class="col-md-4">' +
+            '<label for="Klant">Klant*:</label><br>' +
+            '<input type="text" id="Klant" name="Klant" class="form-control form-control-outline elevation1" > ' +
+            '</div>' +
+            '<div class="col-md-4">' +
+            '<label for="Contactpersoon">Contactpersoon*:</label><br>' +
+            '<input type="text" id="Contactpersoon" name="Contactpersoon" class="form-control form-control-outline elevation1" > ' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '<div class="col-md-12">' +
+            '<div class="card elevation5">' +
+            '<div class="card-body">' +
+            '<h5 class="card-title">Product Details</h5>' +
+            '<div class="invoice-form">' +
+            '<div class="invoice-row invoice-header">' +
+            '<div class="invoice-column">Product</div>' +
+            '<div class="invoice-column">Aantal</div>' +
+            '<div class="invoice-column">Stuksprijs</div>' +
+            '<div class="invoice-column">Subtotaal</div>' +
+            '</div>' +
+            '<div class="invoice-row">' +
+            '<div class="invoice-column">Blond animal</div>' +
+            '<div class="invoice-value invoice-value-centered">' +
+            '<input type="text" id="Aantal_ba" name="Aantal_ba" class="form-control form-control-outline elevation1">' +
+            '</div>' +
+            '<div class="invoice-value invoice-value-centered">' +
+            '<input type="text" id="Stuksprijs_ba" name="Stuksprijs_ba" class="form-control form-control-outline elevation1">' +
+            '</div>' +
+            '<div class="invoice-value invoice-value-right">' +
+            '<input type="text" id="Subtotaal_ba" name="Subtotaal_ba" class="form-control form-control-outline elevation1">' +
+            '</div>' +
+            '</div>' +
+            '<div class="invoice-row">' +
+            '<div class="invoice-column">Golden brown</div>' +
+            '<div class="invoice-value invoice-value-centered">' +
+            '<input type="text" id="Aantal_gb" name="Aantal_gb" class="form-control form-control-outline elevation1">' +
+            '</div>' +
+            '<div class="invoice-value invoice-value-centered">' +
+            '<input type="text" id="Stuksprijs_gb" name="Stuksprijs_gb" class="form-control form-control-outline elevation1">' +
+            '</div>' +
+            '<div class="invoice-value invoice-value-right">' +
+            '<input type="text" id="Subtotaal_gb" name="Subtotaal_gb" class="form-control form-control-outline elevation1">' +
+            '</div>' +
+            '</div>' +
+            '<div class="invoice-row">' +
+            '<div class="invoice-column">Three little birds</div>' +
+            '<div class="invoice-value invoice-value-centered">' +
+            '<input type="text" id="Aantal_3lb" name="Aantal_3lb" class="form-control form-control-outline elevation1">' +
+            '</div>' +
+            '<div class="invoice-value invoice-value-centered">' +
+            '<input type="text" id="Stuksprijs_3lb" name="Stuksprijs_3lb" class="form-control form-control-outline elevation1">' +
+            '</div>' +
+            '<div class="invoice-value invoice-value-right">' +
+            '<input type="text" id="Subtotaal_3lb" name="Subtotaal_3lb" class="form-control form-control-outline elevation1">' +
+            '</div>' +
+            '</div>' +
+            '<div class="invoice-row invoice-total">' +
+            '<div class="invoice-column"></div>' +
+            '<div class="invoice-value"></div>' +
+            '<div class="invoice-label">Eenmalige korting</div>' +
+            '<div class="invoice-value invoice-value-right">' +
+            '<input type="text" id="Eenmalige_korting" name="Eenmalige_korting" class="form-control form-control-outline elevation1">' +
+            '</div>' +
+            '</div>' +
+            '<div class="invoice-row invoice-total">' +
+            '<div class="invoice-column"></div>' +
+            '<div class="invoice-value"></div>' +
+            '<div class="invoice-label">Staffel korting</div>' +
+            '<div class="invoice-value invoice-value-right">' +
+            '<input type="text" id="Staffel_korting" name="Staffel_korting" class="form-control form-control-outline elevation1">' +
+            '</div>' +
+            '</div>' +
+            '<div class="invoice-row invoice-total">' +
+            '<div class="invoice-column"></div>' +
+            '<div class="invoice-value"></div>' +
+            '<div class="invoice-label">Totaal verkoop</div>' +
+            '<div class="invoice-value invoice-value-right">' +
+            '<input type="text" id="Totaal_verkoop" name="Totaal_verkoop" class="form-control form-control-outline elevation1">' +
+            '</div>' +
+            '</div>' +
+            '<div class="invoice-row invoice-total">' +
+            '<div class="invoice-column"></div>' +
+            '<div class="invoice-value"></div>' +
+            '<div class="invoice-label">BTW 21%</div>' +
+            '<div class="invoice-value invoice-value-right">' +
+            '<input type="text" id="BTW" name="BTW" class="form-control form-control-outline elevation1">' +
+            '</div>' +
+            '</div>' +
+            '<div class="invoice-row invoice-total">' +
+            '<div class="invoice-column"></div>' +
+            '<div class="invoice-value"></div>' +
+            '<div class="invoice-label">Totaal incl. BTW</div>' +
+            '<div class="invoice-value invoice-value-right">' +
+            '<input type="text" id="Totaal_incl_btw" name="Totaal_incl_btw" class="form-control form-control-outline elevation1">' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+
+            '<div class="col-md-12">' +
+            '<div class="card elevation5">' +
+            '<div class="card-body">' +
+            '<h5 class="card-title">Price Details</h5>' +
+            '<div class="form-group row">' +
+            '<div class="col-md-4">' +
+            '<label for="Eenmalige_korting">Eenmalige Korting:</label><br>' +
+            '<input type="text" id="Eenmalige_korting" name="Eenmalige_korting" class="form-control form-control-outline elevation1" > ' +
+            '</div>' +
+            '<div class="col-md-4">' +
+            '<label for="Staffelkorting">Staffelkorting:</label><br>' +
+            '<input type="text" id="Staffelkorting" name="Staffelkorting" class="form-control form-control-outline elevation1" > ' +
+            '</div>' +
+            '<div class="col-md-4">' +
+            '<label for="Totaal_verkoop">Totaal Verkoop:</label><br>' +
+            '<input type="text" id="Totaal_verkoop" name="Totaal_verkoop" class="form-control form-control-outline elevation1" > ' +
+            '</div>' +
+            '</div>' +
+            '<div class="form-group row">' +
+            '<div class="col-md-4">' +
+            '<label for="Btw">BTW:</label><br>' +
+            '<input type="text" id="Btw" name="Btw" class="form-control form-control-outline elevation1" > ' +
+            '</div>' +
+            '<div class="col-md-4">' +
+            '<label for="Totaal_incl_btw">Totaal Incl BTW:</label><br>' +
+            '<input type="text" id="Totaal_incl_btw" name="Totaal_incl_btw" class="form-control form-control-outline elevation1" > ' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+            '</div>' +
+
+            '<button type="button" id="editButton" disabled class="btn btn-primary btn-outline-primary elevation1" > Edit</button > ' +
+            '<button type="button" id="cancelButton" class="btn btn-primary btn-outline-primary elevation1" style = "display: none;" > Cancel</button > ' +
+            '<input type="submit" id="saveButton" value="Save" disabled class="btn btn-primary btn-outline-primary elevation1" > ' +
+            '<button type="button" id="resetButton" class="btn btn-primary btn-outline-primary elevation1">Reset</button>' +
+            '</form>' +
+            '</div>'; // Closing container div
+
+        $("#content").html(html);
+        attachSearchEventListener(sales); // Attach the search event listener after the form is displayed
+
+        google.script.run.withSuccessHandler(function (statusValues) {
+            const statusSelect = $("#Status");
+            statusSelect.empty(); // Clear any existing options
+            statusValues.forEach(function (status) {
+                const option = $("<option>").val(status).text(status);
+                statusSelect.append(option);
+            });
+
+            // Select the option that matches the sale's status if a sale is selected
+            if ($("#SaleID").val()) {
+                const saleStatus = getSaleStatusByID($("#SaleID").val()); // Get the current sale's status
+                statusSelect.val(saleStatus);
+            } else {
+                // Otherwise, set the default status as "New Sale"
+                statusSelect.val("Potentiële verkoop").change(); // Trigger change event to update the selected option
+            }
+        }).getSaleStatusValues();
+
+        populateStuksprijsFields();
+
+        // Add an event listener to the required fields
+        $("#Besteldatum, #Klant, #Contactpersoon, #Status").on("input change", function () {
+            var besteldatumValue = $("#Besteldatum").val();
+            var klantValue = $("#Klant").val();
+            var contactpersoonValue = $("#Contactpersoon").val();
+            var statusValue = $("#Status option:selected").val();
+
+            // Enable the save button if all required fields are filled, otherwise disable it
+            if (besteldatumValue !== "" && klantValue !== "" && contactpersoonValue !== "" && statusValue !== "") {
+                $("#saveButton").prop("disabled", false);
+            } else {
+                $("#saveButton").prop("disabled", true);
+            }
+        });
+
+        // When freshly loading the page
+        $("#saleForm")[0].reset(); // Reset the form fields
+        $("#SaleID").prop("readonly", true).addClass("uneditable"); // Make the SaleID field readonly and uneditable
+        $("#Status").prop("disabled", false).removeClass("uneditable");
+        $("#Besteldatum").prop("readonly", false).removeClass("uneditable"); // Make the Besteldatum field editable
+        $("#Klant").prop("readonly", false).removeClass("uneditable"); // Make the Klant field editable
+        $("#Contactpersoon").prop("readonly", false).removeClass("uneditable"); // Make the Contactpersoon field editable
+        $("#Aantal_ba").prop("readonly", false).removeClass("uneditable"); // Make the Aantal_ba field editable
+        $("#Stuksprijs_ba").prop("readonly", false).removeClass("uneditable"); // Make the Stuksprijs_ba field editable
+        $("#Subtotaal_ba").prop("readonly", false).removeClass("uneditable"); // Make the Subtotaal_ba field editable
+        $("#Aantal_gb").prop("readonly", false).removeClass("uneditable"); // Make the Aantal_gb field editable
+        $("#Stuksprijs_gb").prop("readonly", false).removeClass("uneditable"); // Make the Stuksprijs_gb field editable
+        $("#Subtotaal_gb").prop("readonly", false).removeClass("uneditable"); // Make the Subtotaal_gb field editable
+        $("#Aantal_3lb").prop("readonly", false).removeClass("uneditable"); // Make the Aantal_3lb field editable
+        $("#Stuksprijs_3lb").prop("readonly", false).removeClass("uneditable"); // Make the Stuksprijs_3lb field editable
+        $("#Subtotaal_3lb").prop("readonly", false).removeClass("uneditable"); // Make the Subtotaal_3lb field editable
+        $("#Eenmalige_korting").prop("readonly", false).removeClass("uneditable"); // Make the Eenmalige_korting field editable
+        $("#Staffelkorting").prop("readonly", false).removeClass("uneditable"); // Make the Staffelkorting field editable
+        $("#Totaal_verkoop").prop("readonly", false).removeClass("uneditable"); // Make the Totaal_verkoop field editable
+        $("#Btw").prop("readonly", false).removeClass("uneditable"); // Make the Btw field editable
+        $("#Totaal_incl_btw").prop("readonly", false).removeClass("uneditable"); // Make the Totaal_incl_btw field editable
+        $("#saveButton").prop("disabled", true); // Disable the save button
+        $("#editButton").prop("disabled", true); // Disable the edit button
+        $("#resetButton").prop("disabled", false); // Enable the reset button
+
+        $("#saleForm").submit(function (e) {
+            e.preventDefault(); // Prevent form submission
+
+            // Add rotation class to the save button icon
+            $("#saveButton").addClass("rotate");
+
+            // Fetch the updated sales data
+            google.script.run.withSuccessHandler(function (salesData) {
+                // Extract the sale data from the form and save it
+                var sale = {
+                    SaleID: $("#SaleID").val(),
+                    Status: $("#Status option:selected").val(),
+                    Besteldatum: $("#Besteldatum").val(),
+                    Klant: $("#Klant").val(),
+                    Contactpersoon: $("#Contactpersoon").val(),
+                    Aantal_ba: $("#Aantal_ba").val(),
+                    Stuksprijs_ba: $("#Stuksprijs_ba").val(),
+                    Subtotaal_ba: $("#Subtotaal_ba").val(),
+                    Aantal_gb: $("#Aantal_gb").val(),
+                    Stuksprijs_gb: $("#Stuksprijs_gb").val(),
+                    Subtotaal_gb: $("#Subtotaal_gb").val(),
+                    Aantal_3lb: $("#Aantal_3lb").val(),
+                    Stuksprijs_3lb: $("#Stuksprijs_3lb").val(),
+                    Subtotaal_3lb: $("#Subtotaal_3lb").val(),
+                    Eenmalige_korting: $("#Eenmalige_korting").val(),
+                    Staffelkorting: $("#Staffelkorting").val(),
+                    Totaal_verkoop: $("#Totaal_verkoop").val(),
+                    Btw: $("#Btw").val(),
+                    Totaal_incl_btw: $("#Totaal_incl_btw").val()
+                };
+
+                // Check if all required fields are filled
+                var requiredFieldsFilled =
+                    $("#Besteldatum").val() !== "" &&
+                    $("#Klant").val() !== "" &&
+                    $("#Contactpersoon").val() !== "" &&
+                    $("#Status option:selected").val() !== "";
+
+                google.script.run.withSuccessHandler(function (result) {
+                    // Update the sales data
+                    window.salesData = result.salesData;
+
+                    // If the SaleID was empty, we know it was a new sale
+                    if (sale.SaleID === "" && result.newSale) {
+                        // Update the SaleID field in the form
+                        $("#SaleID").val(result.newSale.SaleID);
+                    }
+
+                    // Remove the rotation class from the save button icon
+                    $("#saveButton").removeClass("rotate");
+
+                    // Update the searchbar sales data after save
+                    google.script.run.withSuccessHandler(function (sales) {
+                        window.salesData = sales;
+
+                        // Attach the updated sales data to the search bar
+                        attachSearchEventListener(window.salesData);
+                    }).withFailureHandler(showError).getSalesData();
+
+                    // Make fields uneditable after saving
+                    // ... (remaining code)
+
+                }).saveSale(sale, requiredFieldsFilled, salesData);
+            }).getSalesData();
+        });
+
+        $("#editButton").click(function () {
+            // Make fields editable when the edit button is clicked
+            $("#Besteldatum").prop("readonly", false).removeClass("uneditable");
+            $("#Status").prop("disabled", false).removeClass("uneditable");
+            $("#Klant").prop("readonly", false).removeClass("uneditable");
+            $("#Contactpersoon").prop("readonly", false).removeClass("uneditable");
+            $("#Aantal_ba").prop("readonly", false).removeClass("uneditable");
+            $("#Stuksprijs_ba").prop("readonly", false).removeClass("uneditable");
+            $("#Subtotaal_ba").prop("readonly", false).removeClass("uneditable");
+            $("#Aantal_gb").prop("readonly", false).removeClass("uneditable");
+            $("#Stuksprijs_gb").prop("readonly", false).removeClass("uneditable");
+            $("#Subtotaal_gb").prop("readonly", false).removeClass("uneditable");
+            $("#Aantal_3lb").prop("readonly", false).removeClass("uneditable");
+            $("#Stuksprijs_3lb").prop("readonly", false).removeClass("uneditable");
+            $("#Subtotaal_3lb").prop("readonly", false).removeClass("uneditable");
+            $("#Eenmalige_korting").prop("readonly", false).removeClass("uneditable");
+            $("#Staffelkorting").prop("readonly", false).removeClass("uneditable");
+            $("#Totaal_verkoop").prop("readonly", false).removeClass("uneditable");
+            $("#Btw").prop("readonly", false).removeClass("uneditable");
+            $("#Totaal_incl_btw").prop("readonly", false).removeClass("uneditable");
+
+            // Enable the save button and disable the edit button
+            $("#saveButton").prop("disabled", false);
+            $("#editButton").prop("disabled", true);
+
+            // Replace the edit button with the cancel button
+            //$("#editButton").hide();
+            //$("#cancelButton").show();
+        });
+
+        $("#cancelButton").click(function () {
+            // Reset the form and make fields uneditable when the cancel button is clicked
+            $("#saleForm")[0].reset();
+            $("#Besteldatum").prop("readonly", true).addClass("uneditable");
+            $("#Status").prop("disabled", true).addClass("uneditable");
+            $("#Klant").prop("readonly", true).addClass("uneditable");
+            $("#Contactpersoon").prop("readonly", true).addClass("uneditable");
+            $("#Aantal_ba").prop("readonly", true).addClass("uneditable");
+            $("#Stuksprijs_ba").prop("readonly", true).addClass("uneditable");
+            $("#Subtotaal_ba").prop("readonly", true).addClass("uneditable");
+            $("#Aantal_gb").prop("readonly", true).addClass("uneditable");
+            $("#Stuksprijs_gb").prop("readonly", true).addClass("uneditable");
+            $("#Subtotaal_gb").prop("readonly", true).addClass("uneditable");
+            $("#Aantal_3lb").prop("readonly", true).addClass("uneditable");
+            $("#Stuksprijs_3lb").prop("readonly", true).addClass("uneditable");
+            $("#Subtotaal_3lb").prop("readonly", true).addClass("uneditable");
+            $("#Eenmalige_korting").prop("readonly", true).addClass("uneditable");
+            $("#Staffelkorting").prop("readonly", true).addClass("uneditable");
+            $("#Totaal_verkoop").prop("readonly", true).addClass("uneditable");
+            $("#Btw").prop("readonly", true).addClass("uneditable");
+            $("#Totaal_incl_btw").prop("readonly", true).addClass("uneditable");
+
+            // Disable the save button and enable the edit button
+            $("#saveButton").prop("disabled", true);
+            $("#editButton").prop("disabled", false);
+
+            // Replace the cancel button with the edit button
+            $("#cancelButton").hide();
+            $("#editButton").show();
+        });
+
+        $("#resetButton").click(function () {
+            // Reset the form and make fields editable when the reset button is clicked
+            $("#saleForm")[0].reset();
+            $("#Besteldatum").prop("readonly", false).removeClass("uneditable");
+            $("#Status").prop("disabled", false).removeClass("uneditable");
+            $("#Klant").prop("readonly", false).removeClass("uneditable");
+            $("#Contactpersoon").prop("readonly", false).removeClass("uneditable");
+            $("#Aantal_ba").prop("readonly", false).removeClass("uneditable");
+            $("#Stuksprijs_ba").prop("readonly", false).removeClass("uneditable");
+            $("#Subtotaal_ba").prop("readonly", false).removeClass("uneditable");
+            $("#Aantal_gb").prop("readonly", false).removeClass("uneditable");
+            $("#Stuksprijs_gb").prop("readonly", false).removeClass("uneditable");
+            $("#Subtotaal_gb").prop("readonly", false).removeClass("uneditable");
+            $("#Aantal_3lb").prop("readonly", false).removeClass("uneditable");
+            $("#Stuksprijs_3lb").prop("readonly", false).removeClass("uneditable");
+            $("#Subtotaal_3lb").prop("readonly", false).removeClass("uneditable");
+            $("#Eenmalige_korting").prop("readonly", false).removeClass("uneditable");
+            $("#Staffelkorting").prop("readonly", false).removeClass("uneditable");
+            $("#Totaal_verkoop").prop("readonly", false).removeClass("uneditable");
+            $("#Btw").prop("readonly", false).removeClass("uneditable");
+            $("#Totaal_incl_btw").prop("readonly", false).removeClass("uneditable");
+
+            // Fetch and populate stuksprijs for BA
+            google.script.run.withSuccessHandler(function (stuksprijs_ba) {
+                console.log("Stuksprijs for BA:", stuksprijs_ba);
+                $("#Stuksprijs_ba").val(stuksprijs_ba);
+            }).getStuksprijsByShortname('BA');
+
+            // Fetch and populate stuksprijs for GB
+            google.script.run.withSuccessHandler(function (stuksprijs_gb) {
+                console.log("Stuksprijs for GB:", stuksprijs_gb);
+                $("#Stuksprijs_gb").val(stuksprijs_gb);
+            }).getStuksprijsByShortname('GB');
+
+            // Fetch and populate stuksprijs for 3LB
+            google.script.run.withSuccessHandler(function (stuksprijs_3lb) {
+                console.log("Stuksprijs for 3LB:", stuksprijs_3lb);
+                $("#Stuksprijs_3lb").val(stuksprijs_3lb);
+            }).getStuksprijsByShortname('3LB');
+
+            // Disable the save button and enable the edit button
+            $("#saveButton").prop("disabled", true);
+            $("#editButton").prop("disabled", true);
+
+            // Replace the cancel button with the edit button
+            $("#cancelButton").hide();
+            $("#editButton").show();
+        });
+
+        function attachSearchEventListener(sales) {
+            $("#searchBar").on("input", function () {
+                var searchTerm = $(this).val();
+                var searchResults = $("#searchResults");
+
+                if (searchTerm === "") {
+                    searchResults.hide();
+                    searchResults.empty();
+                    return;
+                }
+
+                // Escape special characters in the search term
+                var escapedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+                // Create a case-insensitive regex pattern to match the search term
+                var regexPattern = new RegExp(escapedSearchTerm, "i");
+
+                var filteredSales = sales.filter(function (sale) {
+                    for (var key in sale) {
+                        if (typeof sale[key] === "string" && sale[key].match(regexPattern)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+
+                if (filteredSales.length > 0) {
+                    searchResults.empty();
+
+                    filteredSales.forEach(function (sale) {
+                        console.log(sale);
+
+                        var saleContactpersoon = sale.CONTACTPERSOON;
+                        var saleDetails = "(" + sale.KLANT + ")";
+
+                        var resultItem = $("<div>").addClass("search-result");
+                        var nameElement = $("<span>").text(saleContactpersoon).addClass("result-name");
+                        var detailsElement = $("<span>").html("<i>" + saleDetails + "</i>").addClass("result-details");
+
+                        resultItem.append(nameElement, detailsElement);
+                        resultItem.click(function () {
+                            loadSaleForm(sale);
+                            searchResults.hide();
+                            searchResults.empty();
+                            $("#searchBar").val("");
+                        });
+
+                        searchResults.append(resultItem);
+                    });
+
+                    searchResults.show();
+                } else {
+                    searchResults.hide();
+                    searchResults.empty();
+                }
+            });
+        }
+
+
+        function loadSaleForm(sale) {
+            $("#SaleID").val(sale.SaleID);
+            $("#Status").val(sale.STATUS_Sales).change();
+            $("#Besteldatum").val(sale.BESTELDATUM);
+            $("#Klant").val(sale.KLANT);
+            $("#Contactpersoon").val(sale.CONTACTPERSOON);
+            $("#Aantal_ba").val(sale.AANTAL_BA);
+            $("#Stuksprijs_ba").val(sale.STUKSPRIJS_BA);
+            $("#Subtotaal_ba").val(sale.SUBTOTAAL_BA);
+            $("#Aantal_gb").val(sale.AANTAL_GB);
+            $("#Stuksprijs_gb").val(sale.STUKSPRIJS_GB);
+            $("#Subtotaal_gb").val(sale.SUBTOTAAL_GB);
+            $("#Aantal_3lb").val(sale.AANTAL_3LB);
+            $("#Stuksprijs_3lb").val(sale.STUKSPRIJS_3LB);
+            $("#Subtotaal_3lb").val(sale.SUBTOTAAL_3LB);
+            $("#Eenmalige_korting").val(sale.EENMALIGE_KORTING);
+            $("#Staffelkorting").val(sale.STAFFELKORTING);
+            $("#Totaal_verkoop").val(sale.TOTAAL_VERKOOP);
+            $("#Btw").val(sale.BTW);
+            $("#Totaal_incl_btw").val(sale.TOTAAL_INCL_BTW);
+
+            // Make fields uneditable initially
+            $("#Besteldatum").prop("readonly", true).addClass("uneditable");
+            $("#Status").prop("disabled", true).addClass("uneditable");
+            $("#Klant").prop("readonly", true).addClass("uneditable");
+            $("#Contactpersoon").prop("readonly", true).addClass("uneditable");
+            $("#Aantal_ba").prop("readonly", true).addClass("uneditable");
+            $("#Stuksprijs_ba").prop("readonly", true).addClass("uneditable");
+            $("#Subtotaal_ba").prop("readonly", true).addClass("uneditable");
+            $("#Aantal_gb").prop("readonly", true).addClass("uneditable");
+            $("#Stuksprijs_gb").prop("readonly", true).addClass("uneditable");
+            $("#Subtotaal_gb").prop("readonly", true).addClass("uneditable");
+            $("#Aantal_3lb").prop("readonly", true).addClass("uneditable");
+            $("#Stuksprijs_3lb").prop("readonly", true).addClass("uneditable");
+            $("#Subtotaal_3lb").prop("readonly", true).addClass("uneditable");
+            $("#Eenmalige_korting").prop("readonly", true).addClass("uneditable");
+            $("#Staffelkorting").prop("readonly", true).addClass("uneditable");
+            $("#Totaal_verkoop").prop("readonly", true).addClass("uneditable");
+            $("#Btw").prop("readonly", true).addClass("uneditable");
+            $("#Totaal_incl_btw").prop("readonly", true).addClass("uneditable");
+
+            // Disable the save button and enable the edit button after saving
+            $("#saveButton").prop("disabled", true);
+            $("#editButton").prop("disabled", false);
+        }
+    };
+</script>
